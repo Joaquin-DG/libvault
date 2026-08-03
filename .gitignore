@@ -2,3 +2,5 @@ build/
 TODO
 .vscode/
 *.drawio
+*.bkp
+*.db

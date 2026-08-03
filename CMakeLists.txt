@@ -17,13 +17,17 @@ find_library(RAYLIB_LIBRARY
 	PATHS /usr/local/lib
 	REQUIRED
 )
+find_package(SQLite3 REQUIRED)
 
 add_executable(libvault
 	src/main.cpp
+	src/book.cpp
+	src/conection.cpp
 )
 
 target_include_directories(libvault PRIVATE ${RAYLIB_INCLUDE_DIR})
-target_link_libraries(libvault PRIVATE ${RAYLIB_LIBRARY})
+target_link_libraries(libvault PRIVATE ${RAYLIB_LIBRARY} SQLite::SQLite3)
 
 target_link_libraries(libvault PRIVATE m pthread dl rt)
+
 
