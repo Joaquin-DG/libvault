@@ -24,8 +24,14 @@ int main (int argc , char *argv[])
 
     sqlite3 *db;
 
-    if(sqlite3_open("../library.db",&db) != SQLITE_OK){
+    if (sqlite3_open("library.db", &db) != SQLITE_OK) {
+        std::cerr << sqlite3_errmsg(db) << "\n";
         return 1;
+    }
+
+    const char* sqlCreate = "CREATE TABLE IF NOT EXISTS book (id TEXT PRIMARY KEY, name TEXT);";
+    if (sqlite3_exec(db, sqlCreate, nullptr, nullptr, nullptr) != SQLITE_OK) {
+        std::cerr << sqlite3_errmsg(db) << "\n";
     }
 
     std::string id = generarId();
@@ -34,14 +40,21 @@ int main (int argc , char *argv[])
     const char* sqlInsert = "INSERT into book (id, name) VALUES (?, ?);";
     sqlite3_stmt* stmt;
 
-    if (sqlite3_prepare16_v2(db,sqlInsert, -1 ,&stmt ,nullptr) == SQLITE_OK){
-        sqlite3_bind_text(stmt , 1 , id.c_str(), -1 , SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt , 2 , name.c_str(), -1 , SQLITE_TRANSIENT);
-
-        sqlite3_step(stmt);
+    if (sqlite3_prepare_v2(db, sqlInsert, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, id.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, name.c_str(), -1, SQLITE_TRANSIENT);
+        
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            std::cerr << sqlite3_errmsg(db) << "\n";
+        }
+        
         sqlite3_finalize(stmt);
+    } else {
+        std::cerr << sqlite3_errmsg(db) << "\n";
     }
     
+    sqlite3_close(db);
+
     library l;
 
 
@@ -198,7 +211,6 @@ int main (int argc , char *argv[])
 
     CloseWindow();
 
-    sqlite3_close(db);
 
     return 0;
 }
