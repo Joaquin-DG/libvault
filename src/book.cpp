@@ -12,3 +12,38 @@ std::string generarId(){
 
     return ss.str();
 }
+
+std::string book::GetId(){ return id_; }
+
+std::string book::GetName(){ return name_; }
+
+std::string book::GetAuthor(){ return author_; }
+
+std::string book::GetComment(){ return comment_; }
+
+int book::GetRate(){ return rate_; }
+
+book::book(){
+    id_ = generarId();
+    name_ = "unknown";
+    author_ = "unknown";
+    comment_ = "unknown";
+    rate_ = 0;
+}
+
+book::book(std::string id){
+    id_ = id;
+    name_ = "unknown";
+    author_ = "unknown";
+    comment_ = "unknown";
+    rate_ = 0;
+}
+
+book::book(std::string id, std::string name, std::string author, std::string comment , int rate){
+    id_ = id;
+    name_ = name;
+    author_ = author;
+    comment_ = comment;
+    rate_ = rate;
+}
+

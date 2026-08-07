@@ -1,20 +1,31 @@
 #include <clay.h>
+#include <iostream>
 
-Clay_LayoutConfig config_layout {
+/*
+
+    ALL PAGES:
+        MAIN PAGE:
+            Header, Left Column and Main Panel
+        
+
+
+*/
+
+inline Clay_LayoutConfig config_layout{
     
 };
 
-Clay_Sizing layout_expand = {
+inline Clay_Sizing layout_expand = {
     .width = CLAY_SIZING_GROW(),
     .height = CLAY_SIZING_GROW()
 };
 
-Clay_Sizing layout_book = {
+inline Clay_Sizing layout_book = {
     .width = CLAY_SIZING_FIXED(130),
     .height = CLAY_SIZING_FIXED(200)
 };
 
-Clay_Sizing layout_book_row = {
+inline Clay_Sizing layout_book_row = {
     .width = CLAY_SIZING_GROW(),
     .height = CLAY_SIZING_FIXED(200)
 };

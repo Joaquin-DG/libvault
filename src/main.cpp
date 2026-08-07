@@ -5,7 +5,7 @@
 #define CLAY_IMPLEMENTATION
 
 #include "common.hpp"
-
+#include "clay_renderer_raylib.c"
 
 int main (int argc , char *argv[])
 { 
@@ -18,199 +18,182 @@ int main (int argc , char *argv[])
     Clay_Initialize(claymemory , {WIDTH , HEIGHT}, (Clay_ErrorHandler){Error_handler});
     
     Font fonts[1];
-    fonts[0] = LoadFontEx("../assets/font_test.ttf", 48,0,400);
+    fonts[0] = GetFontDefault();
+
+    Clay_SetMeasureTextFunction(Raylib_MeasureText, fonts);
 
     // Leer la base de datos, por ahora solo va a leer una, despues habra menu interactivo
 
     sqlite3 *db;
 
-    if (sqlite3_open("library.db", &db) != SQLITE_OK) {
+    if (sqlite3_open("/opt/libvault/db/library.db", &db) != SQLITE_OK) {
         std::cerr << sqlite3_errmsg(db) << "\n";
         return 1;
     }
-
-    const char* sqlCreate = "CREATE TABLE IF NOT EXISTS book (id TEXT PRIMARY KEY, name TEXT);";
-    if (sqlite3_exec(db, sqlCreate, nullptr, nullptr, nullptr) != SQLITE_OK) {
-        std::cerr << sqlite3_errmsg(db) << "\n";
-    }
-
-    std::string id = generarId();
-    std::string name = "Rey Arturo";
-
-    const char* sqlInsert = "INSERT into book (id, name) VALUES (?, ?);";
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(db, sqlInsert, -1, &stmt, nullptr) == SQLITE_OK) {
-        sqlite3_bind_text(stmt, 1, id.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, name.c_str(), -1, SQLITE_TRANSIENT);
-        
-        if (sqlite3_step(stmt) != SQLITE_DONE) {
-            std::cerr << sqlite3_errmsg(db) << "\n";
-        }
-        
-        sqlite3_finalize(stmt);
-    } else {
-        std::cerr << sqlite3_errmsg(db) << "\n";
-    }
     
-    sqlite3_close(db);
+    // Read all database and store it in library
 
-    library l;
+    library lib = ReadFromDatabase(db);
 
+    Clay_TextElementConfig bookTextConfig = {
+        .userData = nullptr,
+        .textColor = black,
+        .fontId = 0,
+        .fontSize = 24,
+        .letterSpacing = 0
+    };
 
     SetTargetFPS(60);
     SetWindowMinSize(420,320);
-
-    while(!WindowShouldClose()){
-
+    
+    while (!WindowShouldClose()) {
         // Update
+        Clay_SetLayoutDimensions((Clay_Dimensions){.width = GetScreenWidth(), .height = GetScreenHeight()});
 
-        Clay_SetLayoutDimensions((Clay_Dimensions){.width = GetScreenWidth() , .height = GetScreenHeight()});
+        Vector2 mouse_position_raylib = GetMousePosition();
+        Clay_Vector2 mouse_position = {(float)mouse_position_raylib.x, (float)mouse_position_raylib.y};
+        Clay_SetPointerState(mouse_position, false);
 
         Clay_BeginLayout();
 
-            CLAY(
+        CLAY(CLAY_ID("Background Dislpay"), {
+            .layout = {
+                .sizing = {.width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW()},
+                .padding = CLAY_PADDING_ALL(8),
+                .childGap = 25,
+                .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            },
+            .backgroundColor = vanilla
+        }) {
+            // Child elements go here
 
-                CLAY_ID("Background Dislpay"), (Clay_ElementDeclaration){
-                    .layout = {
-                        .sizing = { .width = CLAY_SIZING_GROW(), .height = CLAY_SIZING_GROW()},
-                        
-                        .padding = CLAY_PADDING_ALL(8),
-                        .childGap = 25,
-                        .layoutDirection = CLAY_TOP_TO_BOTTOM,
+            CLAY(CLAY_ID("Header"), {
+                .layout = {
+                    .sizing = {
+                        .width = CLAY_SIZING_GROW(),
+                        .height = CLAY_SIZING_FIXED(60)
                     },
-                    .backgroundColor = vanilla
+                },
+                .backgroundColor = white,
+                .cornerRadius = CLAY_CORNER_RADIUS(8)
+            }) {}
+
+            CLAY(CLAY_ID("Lower Content"), {
+                .layout = {
+                    .sizing = {layout_expand},
+                    .childGap = 25
                 }
-            ){
-                //Child elements go here
+            }) {
+                CLAY(CLAY_ID("Options Column"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_FIXED(220),
+                            .height = CLAY_SIZING_GROW()
+                        }
+                    },
+                    .backgroundColor = white,
+                    .cornerRadius = CLAY_CORNER_RADIUS(8)
+                }) {} // Options Column
 
-                CLAY(CLAY_ID("Header")
-                    ,(Clay_ElementDeclaration){
-                        .layout = { 
-                            .sizing = {
-                                .width = CLAY_SIZING_GROW(),
-                                .height = CLAY_SIZING_FIXED(60)
-                            },
-
+                CLAY(CLAY_ID("Main Panel"), {
+                    .layout = {
+                        .sizing = {
+                            .width = CLAY_SIZING_GROW(),
+                            .height = CLAY_SIZING_GROW()
                         },
-                        .backgroundColor = white,
-                        .cornerRadius = CLAY_CORNER_RADIUS(8)
-                    }
+                        .padding = CLAY_PADDING_ALL(16),
+                        .childGap = 25,
+                        .childAlignment = {
+                            .x = CLAY_ALIGN_X_LEFT,
+                            .y = CLAY_ALIGN_Y_TOP
+                        },
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM
+                    },
+                    .backgroundColor = white,
+                    .cornerRadius = CLAY_CORNER_RADIUS(8)
+                }) {
+                    // Childs of Main Panel
 
-                ){
-                 
-                    CLAY(CLAY_ID("Library_header")
-
-
-                    ){}
-
-
-                }
-
-                CLAY(CLAY_ID("Lower Content"),
-                    (Clay_ElementDeclaration){
-                        .layout = {
-                            .sizing = { layout_expand },
-                            .childGap = 25
-                        }
-                    }
-                ){
-
+                    // Here comes the for loop with the library vector
                     
-                    CLAY(CLAY_ID("Options Column")
-                        ,(Clay_ElementDeclaration){
+                    int size = lib.size();
+                    int row_count = (size + 2) / 3;
+
+                    for (int row = 0; row < row_count; ++row) {
+                        CLAY(CLAY_IDI("Book_row_", row), {
                             .layout = {
-                                .sizing = {
-                                    .width = CLAY_SIZING_FIXED(220),
-                                    .height = CLAY_SIZING_GROW()
-                                }
-                            },
-                            .backgroundColor = white,
-                            .cornerRadius = CLAY_CORNER_RADIUS(8)
-                        }
-
-                    ){} // Options Column
-
-
-                    CLAY(CLAY_ID("Main Panel")
-                        ,(Clay_ElementDeclaration){
-                            .layout = {
-                                .sizing = {
-                                    .width = CLAY_SIZING_GROW(),
-                                    .height = CLAY_SIZING_GROW()
-                                },
-                                .padding = CLAY_PADDING_ALL(16),
+                                .sizing = layout_book_row,
                                 .childGap = 25,
-                                .childAlignment = {
-                                    .x = CLAY_ALIGN_X_LEFT,
-                                    .y = CLAY_ALIGN_Y_TOP
-                                },
-                                .layoutDirection = CLAY_TOP_TO_BOTTOM
-                            },
-                            .backgroundColor = white,
-                            .cornerRadius = CLAY_CORNER_RADIUS(8)
-                        }
-
-                    ){
-                        //Childs of Main Panel
-
-                        //Here comes the for loop with the library vector
-                        CLAY(CLAY_ID("Book_row_test"),
-                            (Clay_ElementDeclaration){
-                                .layout = {
-                                    .sizing = layout_book_row,
-                                    .childGap = 25,
-                                    .layoutDirection = CLAY_LEFT_TO_RIGHT
-                                },
+                                .layoutDirection = CLAY_LEFT_TO_RIGHT
                             }
+                        }) {
+                            for (int column = 0; column < 3; ++column) {
+                                int book_index = row * 3 + column;
 
-                        ){
-                            CLAY(CLAY_ID("book_cover"),
-                                (Clay_ElementDeclaration){
-                                    .layout = {
-                                        .sizing = layout_book
-                                    },
-                                    .backgroundColor = black
-                                } 
-                            ){}
-
-                            CLAY(CLAY_ID("Book_text"),
-                                (Clay_ElementDeclaration){
-                                    .layout = {
-                                        .sizing = layout_expand
-                                    },
-                                    .backgroundColor = black
+                                if (book_index < size) {
+                                    CLAY(CLAY_IDI("Book_", book_index), {
+                                        .layout = {
+                                            .sizing = layout_expand,
+                                            .childGap = 25,
+                                            .layoutDirection = CLAY_LEFT_TO_RIGHT
+                                        }
+                                    }) {
+                                        CLAY(CLAY_IDI("Book_cover_", book_index), {
+                                            .layout = {
+                                                .sizing = layout_book
+                                            },
+                                            .backgroundColor = black
+                                        }) {}
+                                        CLAY(CLAY_IDI("Book_text_", book_index), {
+                                            .layout = {
+                                                .sizing = layout_expand
+                                                ,
+                                                .padding = CLAY_PADDING_ALL(8),
+                                                .childAlignment = {
+                                                    .x = CLAY_ALIGN_X_LEFT,
+                                                    .y = CLAY_ALIGN_Y_TOP
+                                                }
+                                            }
+                                        }) {
+                                            std::string bookId = lib[book_index].GetId();
+                                            Clay_String bookIdText = {
+                                                .isStaticallyAllocated = false,
+                                                .length = (int32_t)bookId.size(),
+                                                .chars = bookId.c_str()
+                                            };
+                                            CLAY_TEXT(bookIdText, bookTextConfig);
+                                        }
+                                    }
+                                } else {
+                                    CLAY(CLAY_IDI("Book_empty_", book_index), {
+                                        .layout = {
+                                            .sizing = layout_expand
+                                        }
+                                    }) {}
                                 }
-                            ){}
+                            }
                         } // book_row
-                    
-                    } //Main Panel
+                    } // book rows ( for loop )
+                } // Main Panel
+            } // Lower content
+        } // Background Display
 
-                }   // Lower content
-                
-                
-            } // Background Display 
-        
-        
         Clay_RenderCommandArray renderCommands = Clay_EndLayout(GetFrameTime());
 
+
+        //Update non-clay starts here
 
 
         // Drawing
         BeginDrawing();
-
         ClearBackground(BLACK);
-
         Clay_Raylib_Render(renderCommands, fonts);
-
         EndDrawing();
-
     }
 
     UnloadFont(fonts[0]);
-
     CloseWindow();
-
+    sqlite3_close(db);
 
     return 0;
-}
+}    
