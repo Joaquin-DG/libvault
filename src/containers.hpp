@@ -11,10 +11,6 @@
 
 */
 
-inline Clay_LayoutConfig config_layout{
-    
-};
-
 inline Clay_Sizing layout_expand = {
     .width = CLAY_SIZING_GROW(),
     .height = CLAY_SIZING_GROW()

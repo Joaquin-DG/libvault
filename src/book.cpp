@@ -15,6 +15,8 @@ std::string generarId(){
 
 std::string book::GetId(){ return id_; }
 
+const std::string& book::GetIdRef() const { return id_; }
+
 std::string book::GetName(){ return name_; }
 
 std::string book::GetAuthor(){ return author_; }

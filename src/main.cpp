@@ -31,10 +31,6 @@ int main (int argc , char *argv[])
         return 1;
     }
     
-    // Read all database and store it in library
-
-    library lib = ReadFromDatabase(db);
-
     Clay_TextElementConfig bookTextConfig = {
         .userData = nullptr,
         .textColor = black,
@@ -42,6 +38,14 @@ int main (int argc , char *argv[])
         .fontSize = 24,
         .letterSpacing = 0
     };
+
+    // Read all database and store it in library
+
+    library lib = ReadFromDatabase(db);
+    std::string selected_book;
+
+    bool hasPendingDelete = false;
+    bool hasPendingInsert = false;
 
     SetTargetFPS(60);
     SetWindowMinSize(420,320);
@@ -63,7 +67,7 @@ int main (int argc , char *argv[])
                 .childGap = 25,
                 .layoutDirection = CLAY_TOP_TO_BOTTOM,
             },
-            .backgroundColor = vanilla
+            .backgroundColor = brown
         }) {
             // Child elements go here
 
@@ -74,7 +78,7 @@ int main (int argc , char *argv[])
                         .height = CLAY_SIZING_FIXED(60)
                     },
                 },
-                .backgroundColor = white,
+                .backgroundColor = vanilla,
                 .cornerRadius = CLAY_CORNER_RADIUS(8)
             }) {}
 
@@ -89,11 +93,60 @@ int main (int argc , char *argv[])
                         .sizing = {
                             .width = CLAY_SIZING_FIXED(220),
                             .height = CLAY_SIZING_GROW()
-                        }
+                            },
+                        .padding = {8,8,16,8},
+                        .childGap = 25,
+                        .layoutDirection = CLAY_TOP_TO_BOTTOM
                     },
-                    .backgroundColor = white,
+                    .backgroundColor = vanilla,
                     .cornerRadius = CLAY_CORNER_RADIUS(8)
-                }) {} // Options Column
+                }) {
+                    
+                    CLAY(CLAY_ID("Add Book Button"), {
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_GROW(),
+                                .height = CLAY_SIZING_FIXED(40)
+                            }
+                        },
+                        .backgroundColor = black,
+                        .cornerRadius = CLAY_CORNER_RADIUS(8)
+                    }) {    // Insert logic
+                        if(Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                            hasPendingInsert = true;
+                        }
+                    }
+                    CLAY(CLAY_ID("Delete Book Button"), {
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_GROW(),
+                                .height = CLAY_SIZING_FIXED(40)
+                            }
+                        },
+                        .backgroundColor = black,
+                        .cornerRadius = CLAY_CORNER_RADIUS(8)
+                    }) {
+                        if(Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                            hasPendingDelete = true;
+                        }
+                    }
+                    CLAY(CLAY_ID("Refresh db Button"), {
+                        .layout = {
+                            .sizing = {
+                                .width = CLAY_SIZING_GROW(),
+                                .height = CLAY_SIZING_FIXED(40)
+                            }
+                        },
+                        .backgroundColor = black,
+                        .cornerRadius = CLAY_CORNER_RADIUS(8)
+                    }) {
+                        if ( Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                            lib = ReadFromDatabase(db);
+                        }
+                    }
+
+
+                } // Options Column
 
                 CLAY(CLAY_ID("Main Panel"), {
                     .layout = {
@@ -103,13 +156,15 @@ int main (int argc , char *argv[])
                         },
                         .padding = CLAY_PADDING_ALL(16),
                         .childGap = 25,
+                        /*
                         .childAlignment = {
                             .x = CLAY_ALIGN_X_LEFT,
                             .y = CLAY_ALIGN_Y_TOP
                         },
+                        */
                         .layoutDirection = CLAY_TOP_TO_BOTTOM
                     },
-                    .backgroundColor = white,
+                    .backgroundColor = vanilla,
                     .cornerRadius = CLAY_CORNER_RADIUS(8)
                 }) {
                     // Childs of Main Panel
@@ -136,8 +191,12 @@ int main (int argc , char *argv[])
                                             .sizing = layout_expand,
                                             .childGap = 25,
                                             .layoutDirection = CLAY_LEFT_TO_RIGHT
-                                        }
+                                        },
+                                        .backgroundColor = (selected_book == lib[book_index].GetId()) ? camel : vanilla
                                     }) {
+                                        if ( Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                                            selected_book = lib[book_index].GetId();
+                                        }
                                         CLAY(CLAY_IDI("Book_cover_", book_index), {
                                             .layout = {
                                                 .sizing = layout_book
@@ -155,11 +214,10 @@ int main (int argc , char *argv[])
                                                 }
                                             }
                                         }) {
-                                            std::string bookId = lib[book_index].GetId();
                                             Clay_String bookIdText = {
                                                 .isStaticallyAllocated = false,
-                                                .length = (int32_t)bookId.size(),
-                                                .chars = bookId.c_str()
+                                                .length = (int32_t)lib[book_index].GetIdRef().size(),
+                                                .chars = lib[book_index].GetIdRef().c_str()
                                             };
                                             CLAY_TEXT(bookIdText, bookTextConfig);
                                         }
@@ -183,6 +241,19 @@ int main (int argc , char *argv[])
 
         //Update non-clay starts here
 
+        
+        if (hasPendingDelete) {
+            fsqlDelete(db, selected_book);
+            lib = ReadFromDatabase(db);
+            hasPendingDelete = false;
+            selected_book.clear();
+        }
+        if ( hasPendingInsert){
+            fsqlInsert(db);
+            lib = ReadFromDatabase(db);
+            hasPendingInsert = false; 
+        }
+
 
         // Drawing
         BeginDrawing();
@@ -191,7 +262,6 @@ int main (int argc , char *argv[])
         EndDrawing();
     }
 
-    UnloadFont(fonts[0]);
     CloseWindow();
     sqlite3_close(db);
 

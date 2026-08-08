@@ -19,6 +19,7 @@ class book {
     public:
 
     std::string GetId();
+    const std::string& GetIdRef() const;
     std::string GetName();
     std::string GetAuthor();
     std::string GetComment();

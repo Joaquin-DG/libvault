@@ -38,9 +38,9 @@ bool fsqlInsert(sqlite3* db,std::string name, std::string author, std::string co
 bool fsqlInsert(sqlite3* db){
     
     std::string id = generarId();
-    std::string name = "\0";
-    std::string author = "\0";
-    std::string comment = "\0";
+    std::string name = "";
+    std::string author = "";
+    std::string comment = "";
     int rate = 0;
     
     sqlite3_stmt* stmt;
@@ -94,7 +94,7 @@ bool fsqlUpdateAuthor(sqlite3* db, std::string id, std::string author){
 
     sqlite3_stmt* stmt;
         
-    if ( sqlite3_prepare_v2(db, sqlUpdateName, -1 , &stmt , nullptr) == SQLITE_OK) {
+    if ( sqlite3_prepare_v2(db, sqlUpdateAuthor, -1 , &stmt , nullptr) == SQLITE_OK) {
         sqlite3_bind_text(stmt , 1, author.c_str() , -1 , SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt , 2, id.c_str() , -1 , SQLITE_TRANSIENT);
         
@@ -116,7 +116,7 @@ bool fsqlUpdateComment(sqlite3* db, std::string id, std::string comment){
 
     sqlite3_stmt* stmt;
         
-    if ( sqlite3_prepare_v2(db, sqlUpdateName, -1 , &stmt , nullptr) == SQLITE_OK) {
+    if ( sqlite3_prepare_v2(db, sqlUpdateComment, -1 , &stmt , nullptr) == SQLITE_OK) {
         sqlite3_bind_text(stmt , 1, comment.c_str() , -1 , SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt , 2, id.c_str() , -1 , SQLITE_TRANSIENT);
         
@@ -139,7 +139,7 @@ bool fsqlUpdateRate(sqlite3* db, std::string id, int rate){
 
     sqlite3_stmt* stmt;
         
-    if ( sqlite3_prepare_v2(db, sqlUpdateName, -1 , &stmt , nullptr) == SQLITE_OK) {
+    if ( sqlite3_prepare_v2(db, sqlUpdateRate, -1 , &stmt , nullptr) == SQLITE_OK) {
         
         sqlite3_bind_int(stmt , 1, rate);
         sqlite3_bind_text(stmt , 2, id.c_str() , -1 , SQLITE_TRANSIENT);
