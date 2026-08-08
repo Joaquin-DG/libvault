@@ -42,7 +42,7 @@ int main (int argc , char *argv[])
     // Read all database and store it in library
 
     library lib = ReadFromDatabase(db);
-    std::string selected_book;
+    std::vector<std::string> selected_book;
 
     bool hasPendingDelete = false;
     bool hasPendingInsert = false;
@@ -192,11 +192,17 @@ int main (int argc , char *argv[])
                                             .childGap = 25,
                                             .layoutDirection = CLAY_LEFT_TO_RIGHT
                                         },
-                                        .backgroundColor = (selected_book == lib[book_index].GetId()) ? camel : vanilla
+                                        .backgroundColor = (find_selected_book(selected_book,lib[book_index].GetId())) ? camel : vanilla
                                     }) {
-                                        if ( Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                                            selected_book = lib[book_index].GetId();
+                                        if ( Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyDown(KEY_LEFT_CONTROL)){
+                                            selected_book.push_back(lib[book_index].GetId());
                                         }
+                                        if ( Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && IsKeyUp(KEY_LEFT_CONTROL)){
+                                            selected_book.clear();
+                                            selected_book.push_back(lib[book_index].GetId());
+                                        }
+
+
                                         CLAY(CLAY_IDI("Book_cover_", book_index), {
                                             .layout = {
                                                 .sizing = layout_book
@@ -243,7 +249,11 @@ int main (int argc , char *argv[])
 
         
         if (hasPendingDelete) {
-            fsqlDelete(db, selected_book);
+            
+            for ( const auto &b : selected_book ){
+                fsqlDelete(db, b);
+            }            
+
             lib = ReadFromDatabase(db);
             hasPendingDelete = false;
             selected_book.clear();

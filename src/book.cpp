@@ -23,6 +23,8 @@ std::string book::GetAuthor(){ return author_; }
 
 std::string book::GetComment(){ return comment_; }
 
+std::string book::GetImgPath(){ return path_; }
+
 int book::GetRate(){ return rate_; }
 
 book::book(){
@@ -30,6 +32,7 @@ book::book(){
     name_ = "unknown";
     author_ = "unknown";
     comment_ = "unknown";
+    path_ = "unknown";
     rate_ = 0;
 }
 
@@ -38,14 +41,24 @@ book::book(std::string id){
     name_ = "unknown";
     author_ = "unknown";
     comment_ = "unknown";
+    path_ = "unknown";
     rate_ = 0;
 }
 
-book::book(std::string id, std::string name, std::string author, std::string comment , int rate){
+book::book(std::string id, std::string name, std::string author, std::string comment ,std::string path, int rate){
     id_ = id;
     name_ = name;
     author_ = author;
     comment_ = comment;
+    path_ = path;
     rate_ = rate;
 }
 
+bool find_selected_book(std::vector<std::string> books, std::string id){
+    for ( const auto &b : books ){
+        if (id == b){
+            return true;
+        }
+    }
+    return false;
+}
