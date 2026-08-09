@@ -211,22 +211,40 @@ int main (int argc , char *argv[])
                                         }) {}
                                         CLAY(CLAY_IDI("Book_text_", book_index), {
                                             .layout = {
-                                                .sizing = layout_expand
-                                                ,
+                                                .sizing = layout_expand,
                                                 .padding = CLAY_PADDING_ALL(8),
+                                                .childGap = 25,
                                                 .childAlignment = {
                                                     .x = CLAY_ALIGN_X_LEFT,
                                                     .y = CLAY_ALIGN_Y_TOP
-                                                }
+                                                },
+                                                .layoutDirection = CLAY_TOP_TO_BOTTOM
                                             }
                                         }) {
-                                            Clay_String bookIdText = {
-                                                .isStaticallyAllocated = false,
-                                                .length = (int32_t)lib[book_index].GetIdRef().size(),
-                                                .chars = lib[book_index].GetIdRef().c_str()
-                                            };
-                                            CLAY_TEXT(bookIdText, bookTextConfig);
-                                        }
+                                            CLAY(CLAY_IDI("Book_text_id_", book_index)){
+
+                                                Clay_String bookIdText = {
+                                                    .isStaticallyAllocated = false,
+                                                    .length = (int32_t)lib[book_index].GetId().size(),
+                                                    .chars = lib[book_index].GetId().c_str()
+                                                };
+                                                CLAY_TEXT(bookIdText, bookTextConfig);
+                                            }
+                                            
+                                            CLAY(CLAY_IDI("Book_text_name_",book_index)){
+                                                const std::string& bookName = lib[book_index].GetName();
+                                                const char* bookNameChars = bookName.empty()
+                                                    ? "unknown"
+                                                    : bookName.c_str();
+
+                                                Clay_String bookNameText = {
+                                                    .isStaticallyAllocated = false,
+                                                    .length = (int32_t)(bookName.empty() ? 7 : bookName.size()),
+                                                    .chars = bookNameChars
+                                                };
+                                                CLAY_TEXT(bookNameText, bookTextConfig);
+                                            }
+                                        } // Book_text
                                     }
                                 } else {
                                     CLAY(CLAY_IDI("Book_empty_", book_index), {

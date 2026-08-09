@@ -13,17 +13,11 @@ std::string generarId(){
     return ss.str();
 }
 
-std::string book::GetId(){ return id_; }
-
-const std::string& book::GetIdRef() const { return id_; }
-
-std::string book::GetName(){ return name_; }
-
-std::string book::GetAuthor(){ return author_; }
-
-std::string book::GetComment(){ return comment_; }
-
-std::string book::GetImgPath(){ return path_; }
+const std::string& book::GetId() const { return id_; }
+const std::string& book::GetName() const { return name_; }
+const std::string& book::GetAuthor() const { return author_; }
+const std::string& book::GetComment() const { return comment_; }
+const std::string& book::GetImgPath() const { return path_; }
 
 int book::GetRate(){ return rate_; }
 

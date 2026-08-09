@@ -19,12 +19,11 @@ class book {
     
     public:
 
-    std::string GetId();
-    const std::string& GetIdRef() const;
-    std::string GetName();
-    std::string GetAuthor();
-    std::string GetComment();
-    std::string GetImgPath();
+    const std::string& GetId() const;
+    const std::string& GetName() const;
+    const std::string& GetAuthor() const;
+    const std::string& GetComment() const;
+    const std::string& GetImgPath() const;
     int GetRate();
 
     inline void SetId(std::string id) { id_ = id; }
