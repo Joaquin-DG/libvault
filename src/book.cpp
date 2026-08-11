@@ -56,3 +56,30 @@ bool find_selected_book(std::vector<std::string> books, std::string id){
     }
     return false;
 }
+
+std::string GetCommandOutput(const std::string& command) {
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "ERROR: popen failed!";
+    
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
+
+std::vector<std::string> GetArrayImages(const std::string& command_output){
+    std::vector<std::string> list;
+    std::istringstream iss(command_output);
+
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (line.empty()) continue;
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        list.push_back(line);
+    }
+
+    return list;
+}

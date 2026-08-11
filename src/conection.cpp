@@ -1,6 +1,6 @@
 #include "conection.hpp"
 
-const char* sqlRead = "SELECT id, name, author, comment, rate FROM book;";
+const char* sqlRead = "SELECT id, name, author, comment, rate, path FROM book;";
 const char* sqlInsert = "INSERT into book (id, name, author, comment, rate, path) VALUES (?, ?, ?, ?, ?, ?);";
 const char* sqlDelete = "DELETE FROM book WHERE id = ?;";
 const char* sqlUpdateName = "UPDATE book SET name = ? WHERE id = ?;";

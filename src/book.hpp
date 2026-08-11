@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 
 class book {
 
@@ -44,3 +45,7 @@ typedef std::vector<book> library ;
 std::string generarId();
 
 bool find_selected_book(std::vector<std::string> books, std::string id);
+
+std::string GetCommandOutput(const std::string& command);
+
+std::vector<std::string> GetArrayImages(const std::string& command_output);
