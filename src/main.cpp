@@ -1,5 +1,7 @@
 /*  libvault
         main.cpp
+
+        READ TODO
 */
 
 #define CLAY_IMPLEMENTATION
@@ -52,10 +54,41 @@ int main (int argc , char *argv[])
 
     library lib = ReadFromDatabase(db);
     std::vector<std::string> selected_book;
+    int open_image_menu_index = -1;
 
-    std::string command_output = GetCommandOutput("ls /home/jdg/Pictures/ebook_cover");
+    const std::string image_dir = "/home/jdg/Pictures/ebook_cover";
+    std::string command_output = GetCommandOutput((std::string("ls -- ") + "\"" + image_dir + "\"").c_str());
+
+    std::vector<std::string> path_images = GetArrayImages(command_output);
+
+    std::vector<Image> images;
     
-    std::vector<std::string> images = GetArrayImages(command_output);
+    std::unordered_map<int , Texture2D> fimages;
+
+    for (const auto &i : path_images) {
+        if (i.empty()) continue;
+
+        std::string full_path = image_dir + "/" + i;
+        Image img = LoadImage(full_path.c_str());
+
+        if (img.data == nullptr || img.width <= 0 || img.height <= 0) {
+            UnloadImage(img);
+            continue;
+        }
+
+        images.push_back(img);
+    }
+    int i = 0;
+    for (const auto &img : images) {
+        if (img.data == nullptr || img.width <= 0 || img.height <= 0) continue;
+
+        Texture2D tex = LoadTextureFromImage(img);
+        if (tex.id != 0) {
+            fimages[i] = tex;
+            i++;
+        }
+    }
+
     
     bool hasPendingDelete = false;
     bool hasPendingInsert = false;
@@ -63,7 +96,7 @@ int main (int argc , char *argv[])
     std::string temp_name;
     std::string temp_author;
     std::string temp_comment;
-    std::string temp_path;
+    int temp_img = 0;
     int temp_rate = 0;
 
     SetTargetFPS(60);
@@ -75,7 +108,10 @@ int main (int argc , char *argv[])
 
         Vector2 mouse_position_raylib = GetMousePosition();
         Clay_Vector2 mouse_position = {(float)mouse_position_raylib.x, (float)mouse_position_raylib.y};
-        Clay_SetPointerState(mouse_position, false);
+        Clay_SetPointerState(mouse_position, IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+
+        float mouseWheelY = GetMouseWheelMove();
+        Clay_UpdateScrollContainers(true, {0.0f, mouseWheelY * 10.0f}, GetFrameTime());
 
         Clay_BeginLayout();
 
@@ -120,15 +156,17 @@ int main (int argc , char *argv[])
                     .backgroundColor = vanilla,
                     .cornerRadius = CLAY_CORNER_RADIUS(8)
                 }) {
-                    
-                    char* addbook = "Add Book";
                     CLAY(CLAY_ID("Add Book Button"), {
                         .layout = {
                             .sizing = {
                                 .width = CLAY_SIZING_GROW(),
                                 .height = CLAY_SIZING_FIXED(40)
                             },
-                            .padding = {45,0,10,0}
+                            .padding = CLAY_PADDING_ALL(0),
+                            .childAlignment = {
+                                .x = CLAY_ALIGN_X_CENTER,
+                                .y = CLAY_ALIGN_Y_CENTER
+                            }
                         },
                         .backgroundColor = camel,
                         .cornerRadius = CLAY_CORNER_RADIUS(8)
@@ -138,8 +176,8 @@ int main (int argc , char *argv[])
                         }
                         Clay_String AddBookButton = {
                             .isStaticallyAllocated = false,
-                            .length = (int32_t)strlen(addbook),
-                            .chars = addbook
+                            .length = (int32_t)10,
+                            .chars = "Add Book"
                         };
                         CLAY_TEXT(AddBookButton, bookTextConfig);
                     }
@@ -149,7 +187,11 @@ int main (int argc , char *argv[])
                                 .width = CLAY_SIZING_GROW(),
                                 .height = CLAY_SIZING_FIXED(40)
                             },
-                            .padding = {45,0,10,0}
+                            .padding = CLAY_PADDING_ALL(0),
+                            .childAlignment = {
+                                .x = CLAY_ALIGN_X_CENTER,
+                                .y = CLAY_ALIGN_Y_CENTER
+                            }
                         },
                         .backgroundColor = camel,
                         .cornerRadius = CLAY_CORNER_RADIUS(8)
@@ -175,16 +217,14 @@ int main (int argc , char *argv[])
                         },
                         .padding = CLAY_PADDING_ALL(16),
                         .childGap = 25,
-                        /*
-                        .childAlignment = {
-                            .x = CLAY_ALIGN_X_LEFT,
-                            .y = CLAY_ALIGN_Y_TOP
-                        },
-                        */
                         .layoutDirection = CLAY_TOP_TO_BOTTOM
                     },
                     .backgroundColor = vanilla,
-                    .cornerRadius = CLAY_CORNER_RADIUS(8)
+                    .cornerRadius = CLAY_CORNER_RADIUS(8),
+                    .clip = {
+                        .vertical = true,
+                        .childOffset = Clay_GetScrollOffset()
+                    }
                 }) {
                     // Childs of Main Panel
 
@@ -226,7 +266,52 @@ int main (int argc , char *argv[])
                                                 .sizing = layout_book
                                             },
                                             .backgroundColor = black
-                                        }) {}
+                                        }) {
+                                            CLAY(CLAY_IDI("Book_image_",book_index),{
+                                                .layout = {
+                                                    .sizing = layout_expand
+                                                },
+                                                  .image = (book_index < fimages.size()) ? &fimages[lib[book_index].GetImg()] : nullptr
+                                                }
+                                            ){
+                                                CLAY(CLAY_IDI("Book_selector_",book_index),{
+                                                    .layout = {
+                                                        .sizing = {
+                                                            .width = 20,
+                                                            .height = 20
+                                                        }
+                                                    },
+                                                    .backgroundColor = vanilla
+                                                }){
+                                                    if (Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                                                        open_image_menu_index = (open_image_menu_index == book_index)
+                                                            ? -1
+                                                            : book_index;
+                                                    }
+
+                                                    if (open_image_menu_index == book_index) {
+                                                        CLAY(CLAY_IDI("Book_selection_menu_", book_index),{
+                                                            .layout = {
+                                                                .sizing = {
+                                                                    .width = 100,
+                                                                    .height = 100
+                                                                }
+                                                            },
+                                                            .floating = {
+                                                                .offset = {0,0},
+                                                                .expand = { 32 , 100 },
+                                                                .zIndex = 0,
+                                                                .attachPoints = {
+                                                                    .element = CLAY_ATTACH_POINT_LEFT_TOP,
+                                                                    .parent = CLAY_ATTACH_POINT_LEFT_BOTTOM
+                                                                },
+                                                                .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE
+                                                            }
+                                                        }){}
+                                                    }
+                                                }
+                                            }
+                                        }
                                         CLAY(CLAY_IDI("Book_text_", book_index), {
                                             .layout = {
                                                 .sizing = layout_expand,
@@ -336,6 +421,13 @@ int main (int argc , char *argv[])
         Clay_Raylib_Render(renderCommands, fonts);
         EndDrawing();
     }
+
+    for ( int i = 0 ; i < fimages.size() ; i++){
+        UnloadTexture(fimages[i]);
+    }
+
+    for( auto &i : images )
+        UnloadImage(i);
 
     CloseWindow();
     sqlite3_close(db);

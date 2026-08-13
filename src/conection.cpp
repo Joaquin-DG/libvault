@@ -1,13 +1,13 @@
 #include "conection.hpp"
 
-const char* sqlRead = "SELECT id, name, author, comment, rate, path FROM book;";
-const char* sqlInsert = "INSERT into book (id, name, author, comment, rate, path) VALUES (?, ?, ?, ?, ?, ?);";
+const char* sqlRead = "SELECT id, name, author, comment, rate, img FROM book;";
+const char* sqlInsert = "INSERT into book (id, name, author, comment, rate, img) VALUES (?, ?, ?, ?, ?, ?);";
 const char* sqlDelete = "DELETE FROM book WHERE id = ?;";
 const char* sqlUpdateName = "UPDATE book SET name = ? WHERE id = ?;";
 const char* sqlUpdateAuthor = "UPDATE book SET author = ? WHERE id = ?;";
 const char* sqlUpdateComment = "UPDATE book SET comment = ? WHERE id = ?;";
 const char* sqlUpdateRate = "UPDATE book SET rate = ? WHERE id = ?;";
-const char* sqlUpdatePath = "UPDATE book SET path = ? WHERE id = ?;";
+const char* sqlUpdateImg = "UPDATE book SET img = ? WHERE id = ?;";
 
 
 bool fsqlInsert(sqlite3* db,std::string name, std::string author, std::string comment , int img ,int rate){
@@ -143,7 +143,7 @@ bool fsqlUpdateImg(sqlite3* db, std::string id, int img){
 
     sqlite3_stmt* stmt;
         
-    if ( sqlite3_prepare_v2(db, sqlUpdatePath, -1 , &stmt , nullptr) == SQLITE_OK) {
+    if ( sqlite3_prepare_v2(db, sqlUpdateImg, -1 , &stmt , nullptr) == SQLITE_OK) {
         sqlite3_bind_int64(stmt, 1 ,img);
         sqlite3_bind_text(stmt , 2, id.c_str() , -1 , SQLITE_TRANSIENT);
         
