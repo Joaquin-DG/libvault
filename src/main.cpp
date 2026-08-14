@@ -41,7 +41,7 @@ int main (int argc , char *argv[])
     int open_image_menu_index = -1;
     int selected_image_for_change = 0;
 
-    const std::string image_dir = "/home/jdg/Pictures/ebook_cover";
+    std::string image_dir = "/home/jdg/Pictures/ebook_cover";
     std::string command_output = GetCommandOutput((std::string("ls -- ") + "\"" + image_dir + "\"").c_str());
 
     std::vector<std::string> path_images = GetArrayImages(command_output);
@@ -72,16 +72,13 @@ int main (int argc , char *argv[])
         }
     }
 
-    
+    bool allow_img_input = false;
+
     bool hasPendingDelete = false;
     bool hasPendingInsert = false;
     bool hasPendingUpdateImg = false;
 
-    std::string temp_name;
-    std::string temp_author;
-    std::string temp_comment;
-    int temp_img = 0;
-    int temp_rate = 0;
+    std::string img_input_path;
 
     SetTargetFPS(60);
     SetWindowMinSize(420,320);
@@ -123,7 +120,7 @@ int main (int argc , char *argv[])
 
             CLAY(CLAY_ID("Lower Content"), {
                 .layout = {
-                    .sizing = {layout_expand},
+                    .sizing = layout_expand,
                     .childGap = 25
                 }
             }) {
@@ -154,7 +151,7 @@ int main (int argc , char *argv[])
                         },
                         .backgroundColor = camel,
                         .cornerRadius = CLAY_CORNER_RADIUS(8)
-                    }) {    // Insert logic
+                    }) {
                         if(Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                             hasPendingInsert = true;
                         }
@@ -163,7 +160,7 @@ int main (int argc , char *argv[])
                             .length = (int32_t)10,
                             .chars = "Add Book"
                         };
-                        CLAY_TEXT(AddBookButton, bookTextConfig);
+                        CLAY_TEXT(AddBookButton, medium);
                     }
                     CLAY(CLAY_ID("Delete Book Button"), {
                         .layout = {
@@ -188,7 +185,7 @@ int main (int argc , char *argv[])
                             .length = (int32_t)16,
                             .chars = "Delete Book"
                         };
-                        CLAY_TEXT(DeleteBookButton, bookTextConfig);
+                        CLAY_TEXT(DeleteBookButton, medium);
                     }
 
                 } // Options Column
@@ -300,8 +297,47 @@ int main (int argc , char *argv[])
                                                                 .childOffset = Clay_GetScrollOffset()
                                                             }
                                                         }) {
-                                                            CLAY_TEXT(CLAY_STRING("Change with right click"),bookTextConfig);
-                                                            
+                                                            CLAY_TEXT(CLAY_STRING("Scrool & Change with right click"),small);
+                                                            CLAY_TEXT(CLAY_STRING("Or input global path to img"),small);
+                                                            CLAY(CLAY_ID("input_img"),{
+                                                                .layout = {
+                                                                    .sizing = {
+                                                                        .width = allow_img_input ? CLAY_SIZING_FIXED(500) : CLAY_SIZING_FIXED(30),
+                                                                        .height = CLAY_SIZING_FIXED(30)
+                                                                    },
+                                                                    .childAlignment = {
+                                                                        .x = CLAY_ALIGN_X_LEFT,
+                                                                        .y = CLAY_ALIGN_Y_CENTER
+                                                                    }
+                                                                },
+                                                                .backgroundColor = allow_img_input ? white : black,
+                                                                .cornerRadius = CLAY_CORNER_RADIUS(8),
+                                                                .floating = {
+                                                                    .offset = { 0,0 },
+                                                                    .expand = { 0,0 },
+                                                                    .zIndex = 200,
+                                                                    .attachPoints = {
+                                                                        .element = CLAY_ATTACH_POINT_LEFT_BOTTOM,
+                                                                        .parent = CLAY_ATTACH_POINT_LEFT_TOP
+                                                                    },
+                                                                    .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_CAPTURE,
+                                                                    .attachTo = CLAY_ATTACH_TO_PARENT,
+                                                                }
+                                                            }){
+                                                                if (Clay_Hovered() && IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+                                                                    allow_img_input = !allow_img_input;
+                                                                }
+
+                                                                if (allow_img_input) {
+                                                                    Clay_String img_path = {
+                                                                        .isStaticallyAllocated = false,
+                                                                        .length = (int32_t)img_input_path.size(),
+                                                                        .chars = img_input_path.c_str()
+                                                                    };
+                                                                    CLAY_TEXT(img_path, small);
+                                                                }
+                                                            }
+
                                                             for (int i = 0; i < coverTextures.size(); ++i) {
                                                                 Texture2D* choiceTexture = &coverTextures[i];
 
@@ -351,7 +387,7 @@ int main (int argc , char *argv[])
                                                     .length = (int32_t)(bookName.empty() ? 7 : bookName.size()),
                                                     .chars = bookNameChars
                                                 };
-                                                CLAY_TEXT(bookNameText, bookNameTextConfig);
+                                                CLAY_TEXT(bookNameText, large);
                                             }
                                             
                                             CLAY(CLAY_IDI("Book_text_author_",book_index)){
@@ -365,7 +401,7 @@ int main (int argc , char *argv[])
                                                     .length = (int32_t)(bookAuthor.empty() ? 7 : bookAuthor.size()),
                                                     .chars = bookAuthorChars
                                                 };
-                                                CLAY_TEXT(bookAuthorText, bookTextConfig);
+                                                CLAY_TEXT(bookAuthorText, medium);
                                             }
 
                                             CLAY(CLAY_IDI("Book_text_comment_",book_index)){
@@ -379,7 +415,7 @@ int main (int argc , char *argv[])
                                                     .length = (int32_t)(bookComment.empty() ? 7 : bookComment.size()),
                                                     .chars = bookCommentChars
                                                 };
-                                                CLAY_TEXT(bookCommentText, bookTextConfig);
+                                                CLAY_TEXT(bookCommentText, medium);
                                             }
 
                                             CLAY(CLAY_IDI("Book_text_rate_",book_index)){
@@ -390,7 +426,7 @@ int main (int argc , char *argv[])
                                                     .length = (int32_t)bookRateLabel.size(),
                                                     .chars = bookRateLabel.c_str()
                                                 };
-                                                CLAY_TEXT(bookRateText, bookTextConfig);
+                                                CLAY_TEXT(bookRateText, medium);
                                             }
                                         } // Book_text
                                     }
@@ -436,12 +472,41 @@ int main (int argc , char *argv[])
             hasPendingUpdateImg = false;
         }
 
+        if ( allow_img_input ){
+            int key = GetCharPressed();
+            while(key > 0){
+                if ((key >= 32) && (key <= 125))
+                {
+                    img_input_path.push_back((char)key);
+                }
+                key = GetCharPressed();
+            }
+            if ( IsKeyPressed ( KEY_BACKSPACE ) ){
+                img_input_path.pop_back();
+            }
+            if ( IsKeyPressed ( KEY_BACKSPACE ) && IsKeyDown(KEY_LEFT_CONTROL) ){
+                img_input_path.clear();
+            }
+            if( IsKeyPressed ( KEY_ENTER ) ){
+                Texture2D new_img = LoadTexture(img_input_path.c_str());
+                if(new_img.id != 0){ 
+                    coverTextures.push_back(new_img);
+                    FileCopy(img_input_path.c_str(), image_dir.c_str());
+                    img_input_path.clear();
+                    allow_img_input = false; 
+                }else{
+                    img_input_path = "Error loading img";
+                }
+            }
+        }
+
         // Drawing
         BeginDrawing();
         ClearBackground(BLACK);
         Clay_Raylib_Render(renderCommands, fonts);
         EndDrawing();
-    }
+
+    } // Main loop
 
     for (size_t i = 0; i < coverTextures.size(); ++i) {
         UnloadTexture(coverTextures[i]);

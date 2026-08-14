@@ -26,7 +26,7 @@ inline Clay_Sizing layout_book_row = {
     .height = CLAY_SIZING_FIXED(200)
 };
 
-inline Clay_TextElementConfig bookTextConfig = {
+inline Clay_TextElementConfig medium = {
     .userData = nullptr,
     .textColor = {0, 0, 0, 255},
     .fontId = 0,
@@ -34,11 +34,18 @@ inline Clay_TextElementConfig bookTextConfig = {
     .letterSpacing = 3
 };
 
-inline Clay_TextElementConfig bookNameTextConfig = {
+inline Clay_TextElementConfig large = {
     .userData = nullptr,
     .textColor = {0, 0, 0, 255},
     .fontId = 0,
     .fontSize = 26,
+    .letterSpacing = 3
+};
+inline Clay_TextElementConfig small = {
+    .userData = nullptr,
+    .textColor = {0, 0, 0, 255},
+    .fontId = 0,
+    .fontSize = 16,
     .letterSpacing = 3
 };
 
